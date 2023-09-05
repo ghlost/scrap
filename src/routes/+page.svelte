@@ -1,4 +1,6 @@
 <script>
+// @ts-nocheck
+
 	import { tick } from "svelte";
 
   let limit = 0;
@@ -15,7 +17,7 @@
   let timerSet = [];
   let displayTime = "00:00:00";
   let log = [];
-  let loot = [];
+  let loot = new Map();
   let choices = [];
   let options = [
     /**
@@ -155,9 +157,9 @@
     options[index].disabled = true;
     limit += options[index].time;
     addToChoices(index);
-    if(loot.length > 0) {
-      loot = [];
-    }
+    // if(loot.length > 0) {
+    //   loot = [];
+    // }
   }
 
   /**
@@ -172,11 +174,26 @@
     removeFromChoices(choicesIndex);
   }
 
+  const handleLoot = (item) => {
+    if(loot.has(item.slug)) {
+      let temp = loot.get(item.slug);
+      console.log('temp: ', temp);
+      temp.number += item.number;
+      loot.set(item.slug, temp);
+    } else {
+      loot.set(item.slug, {
+        'name': item.name,
+        'slug': item.slug,
+        'number': item.number,
+      });
+    }
+  }
+
   /**
    * handleExecuteButton
    */
    const handleExecuteButton = async() => {
-    loot = [];
+    // loot = [];
     log = [];
 
     if(choices.length > 0) {
@@ -190,8 +207,10 @@
         const optionsIndex = options.findIndex((option) => option.id === item.id);
         console.log(`rolled ${roll}, needed ${item.chance * 100}`);
         if (roll <= (Math.round(item.chance * 100))) {
-          loot.push(item);
+          handleLoot(item)
+          // loot.push(item);
           console.log("successful loot", loot);
+          console.log('array of loot', Array.from(loot));
           log.push({'name': item.name, 'message': `successful loot ${item.name}`});
           item.action = true;
         } else { 
@@ -200,9 +219,9 @@
           console.log("no loot", loot);
         }
         action = action;
-        removeFromChoices(0);
+        // removeFromChoices(0);
         console.log("options index", optionsIndex);
-        options[optionsIndex].disabled = false;
+        // options[optionsIndex].disabled = false;
         loot = loot;
         log = log;
       }
@@ -300,8 +319,8 @@
   <!-- <p>Timer: {displayTime}</p> -->
   <ul>
     <li>Loot:</li>
-    {#each loot as item (item.id)}
-      <li>{item.name}</li>
+    {#each loot as item}
+      <li>{item[0]}: {item[1].number}</li>
     {/each}
   </ul>
 </section>

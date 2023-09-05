@@ -1,0 +1,24 @@
+{
+  "ships": [
+    {
+      "name": "Alpha",
+      "slug": "alpha",
+      "scrappables": [
+        {
+          "name": "Titanium",
+          "slug": "titanium",
+          "amount": 6000,
+          "difficulty": 0.1,
+          "care": 0.1
+        },
+        {
+          "name": "Copper",
+          "slug": "copper",
+          "amount": 300,
+          "difficulty": 0.3,
+          "care": 1.5
+        }
+      ]
+    }
+  ]
+}

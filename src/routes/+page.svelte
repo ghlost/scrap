@@ -1,7 +1,6 @@
 <script>
 // @ts-nocheck
-
-	import { tick } from "svelte";
+  import "../app.css";
 
   let limit = 0;
   let error = null;

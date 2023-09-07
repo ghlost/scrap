@@ -1,4 +1,6 @@
 <script>
+// @ts-nocheck
+
 	import { tick } from "svelte";
 
   let limit = 0;
@@ -11,12 +13,14 @@
     seconds: 0,
     minutes: 0
   };
-  $: action = "";
   let timerSet = [];
+  let now = Date.now();
+  let currentTimer;
+  let remainingTime;
   let displayTime = "00:00:00";
   let log = [];
-  let loot = [];
-  let choices = [];
+  let loot = new Map();
+  let queue = [];
   let options = [
     /**
      * name: display title
@@ -32,9 +36,9 @@
       'name': "Scrap the system",
       'chance': 0.58,
       'number': 1,
-      'percent': 1,
+      'percent': 0.58,
       'id': 0,
-      'time': 2000,
+      'time': 5000,
       'slug': 'sys01',
       'limit': 1,
       'disabled': false,
@@ -45,7 +49,7 @@
       'number': 2,
       'percent': 1,
       'id': 1,
-      'time': 200,
+      'time': 1000,
       'slug': 'sm_windows',
       'limit': 2,
       'disabled': false,
@@ -56,7 +60,7 @@
       'number': 2,
       'percent': 1,
       'id': 2,
-      'time': 1000,
+      'time': 5000,
       'slug': 'lg_windows',
       'limit': 1,
       'disabled': false,
@@ -67,9 +71,9 @@
       'number': 200,
       'percent': 0.95,
       'id': 3,
-      'time': 2000,
+      'time': 5000,
       'slug': 'titanium',
-      'limit': 1,
+      'limit': 10,
       'disabled': false,
     },
     {
@@ -78,7 +82,7 @@
       'number': 2,
       'percent': 1,
       'id': 4,
-      'time': 2000,
+      'time': 5000,
       'slug': 'sys02',
       'limit': 1,
       'disabled': false,
@@ -128,11 +132,31 @@
 
   /**
    * delay
+   * @param ms - delay to resolve the timeout
   */
   const delay = (ms) => {
+    now = Date.now();
+
     return new Promise(resolve => {
-      setTimeout(resolve, ms);
+      timerInterval = setTimeout(resolve, ms);
     });
+  }
+
+  /**
+   * pauseTimer
+  */
+  const pauseTimer = () => {
+    clearTimeout(timerInterval);
+    remainingTime = currentTimer (now - Date.now());
+    // while loop
+    // call async function that and await for the next call
+  }
+
+  /**
+   * resumeTimer
+  */
+  const resumeTimer = () => {
+    delay(remainingTime);
   }
 
   /**
@@ -154,98 +178,107 @@
     const index = options.findIndex((item) => item.id === id);
     options[index].disabled = true;
     limit += options[index].time;
-    addToChoices(index);
-    if(loot.length > 0) {
-      loot = [];
-    }
+    addToQueue(index);
   }
 
   /**
-   * handleRemoveButtonClick
+   * handleQueueButtonClick
    * @param id - id of the object in the array
    */
-  const handleRemoveButtonClick = (id) => {
+  const handleQueueButtonClick = (id) => {
     const optionsIndex = options.findIndex((item) => item.id === id);
-    const choicesIndex = choices.findIndex((item) => item.id === id);
+    const queueIndex = queue.findIndex((item) => item.id === id);
     options[optionsIndex].disabled = false;
     limit -= options[optionsIndex].time;
-    removeFromChoices(choicesIndex);
+    removeFromChoices(queueIndex);
+  }
+
+  /**
+   * handleLog
+   * @param msg - add msg to the log, if max size is hit, remove the last item.
+   * Items should be prepended to the array
+   */
+  const handleLog = (msg) => {
+    console.log(msg);
+    if(log.length === 5) {
+      log.pop();
+    }
+    log.unshift(msg);
+    log = log;
+  }
+
+  /**
+   * handleInventory
+   * handle the looting of an item: check if it exists in the map,
+   * if it does override with new count. Otherwise just add it to the map.
+   * @param item - lootable object
+   */
+  const handleInventory = (item) => {
+    if(loot.has(item.slug)) {
+      let temp = loot.get(item.slug);
+      console.log('temp: ', temp);
+      temp.number += Math.round(item.number * item.percent);
+      loot.set(item.slug, temp);
+    } else {
+      loot.set(item.slug, {
+        'name': item.name,
+        'slug': item.slug,
+        'number': Math.round(item.number * item.percent),
+      });
+    }
+  }
+
+  const handleLoot = (item) => {
+    let roll = getRandomInt(1, 100);
+    console.log(`rolled ${roll}, needed ${item.chance * 100}`);
+    return roll < Math.round(item.chance * 100);
   }
 
   /**
    * handleExecuteButton
    */
    const handleExecuteButton = async() => {
-    loot = [];
-    log = [];
+    // loot = [];
 
-    if(choices.length > 0) {
+    if(queue.length > 0) {
       running = true;
       // startTimer(limit);
-      let temp = choices.slice();
+      let temp = queue.slice();
       for (const item of temp) {
-        action = "";
+        currentTimer = item.time;
         await delay(item.time);
-        let roll = getRandomInt(1, 100);
         const optionsIndex = options.findIndex((option) => option.id === item.id);
-        console.log(`rolled ${roll}, needed ${item.chance * 100}`);
-        if (roll <= (Math.round(item.chance * 100))) {
-          loot.push(item);
-          console.log("successful loot", loot);
-          log.push({'name': item.name, 'message': `successful loot ${item.name}`});
+        let isLooted = handleLoot(item);
+        if (isLooted) {
+          handleInventory(item)
+          handleLog(`successful loot ${item.name}`)
           item.action = true;
         } else { 
           item.action = false;
-          log.push({'name': item.name, 'message': `missed loot ${item.name}`});
-          console.log("no loot", loot);
+          handleLog(`missed loot ${item.name}`);
         }
-        action = action;
-        removeFromChoices(0);
+        // removeFromChoices(0);
         console.log("options index", optionsIndex);
-        options[optionsIndex].disabled = false;
+        // options[optionsIndex].disabled = false;
         loot = loot;
-        log = log;
       }
 
       running = false;
       options = options;
       loot = loot;
-
-      // setTimeout(() => {
-      //   choices.forEach(choice => {
-      //     let roll = getRandomInt(1, 100);
-      //     const optionsIndex = options.findIndex((item) => item.id === choice.id);
-      //     console.log('roll', roll);
-      //     console.log('chance', choice.chance);
-      //     if (roll <= (Math.round(choice.chance * 100))) {
-      //       loot.push(choice);
-      //     }
-      //   // options[optionsIndex].disabled = false;
-      //     running = false;
-      //   });
-
-      //   loot = loot;
-      //   // choices = [];
-      //   // console.log("OKAY");
-      //   // console.log("Tick through the array one by one");
-      //   // console.log("Roll the chance to see if successful");
-      //   console.log("Need to determine rewards");
-      //   console.log("Ideally this would happen in sequence and on a timer");
-      //   console.log("limit to some arbitrary time, 45mins?");
-      // }, limit);
     } else {
-      error = "No choices to execute";
+      error = "No queue to execute";
     }
   }
 
   /**
-   * addToChoices
+   * addToQueue
    * @param i - index of the object in the array
    */
-  const addToChoices = (i) => {
-    choices.push(options[i]);
+  const addToQueue = (i) => {
+    queue.push(options[i]);
     // this makes it reactive
-    choices = choices;
+    queue = queue;
     options = options;
   }
 
@@ -254,9 +287,9 @@
    * @param i - index of the object in the array
    */
   const removeFromChoices = (i) => {
-    choices.splice(i, 1);
+    queue.splice(i, 1);
     // this makes it reactive
-    choices = choices;
+    queue = queue;
     options = options;
   }
 </script>
@@ -274,10 +307,10 @@
   </ul>
 
   <ul>
-    <li>Choices</li>
-    {#each choices as item (item.id)}
+    <li>Queue</li>
+    {#each queue as item (item.id)}
       <li>
-        <button class="list-button" disabled={running} on:click={ () => handleRemoveButtonClick(item.id) } >{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
+        <button class="list-button" disabled={running} on:click={ () => handleQueueButtonClick(item.id) } >{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
       </li>
     {/each}
   </ul>
@@ -292,7 +325,7 @@
   <ul>
     <li>Log:</li>
     {#each log as item}
-      <li>{item.message}</li>
+      <li>{item}</li>
     {/each}
   </ul>
 </section>
@@ -300,8 +333,8 @@
   <!-- <p>Timer: {displayTime}</p> -->
   <ul>
     <li>Loot:</li>
-    {#each loot as item (item.id)}
-      <li>{item.name}</li>
+    {#each loot as item}
+      <li>{item[0]}: {item[1].number}</li>
     {/each}
   </ul>
 </section>

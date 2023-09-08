@@ -1,8 +1,6 @@
 <script>
 // @ts-nocheck
 
-	import { tick } from "svelte";
-
   let limit = 0;
   let error = null;
   let running = false;
@@ -294,71 +292,48 @@
   }
 </script>
 
-<h1>Welcome to ScrapKit</h1>
-<p>Choose some options that you want to execute.</p>
-<section>
-  <ul>
-    <li>Options</li>
+<main class="gap-4 grid grid-cols-12 max-w-7xl m-auto">
+  <h1 class="text-3xl text-center font-bold col-span-full">Welcome to ScrapKit</h1>
+  <p class="text-center col-span-full">Choose some options that you want to execute.</p>
+  <ul class="col-span-4 inline-block">
+    <li class="font-bold">Options</li>
     {#each options as item (item.id)}
       <li>
-        <button class="list-button" disabled={item.disabled || running} on:click={ () => handleAddButtonClick(item.id) }>{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
+        <button class="list-button bg-indigo-400 rounded-sm text-white text-lg p-2 hover:bg-indigo-600 disabled:bg-gray-800" disabled={item.disabled || running} on:click={ () => handleAddButtonClick(item.id) }>{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
       </li>
     {/each}
   </ul>
 
-  <ul>
-    <li>Queue</li>
+  <ul class="col-span-4 inline-block">
+    <li class="font-bold">Queue</li>
     {#each queue as item (item.id)}
       <li>
-        <button class="list-button" disabled={running} on:click={ () => handleQueueButtonClick(item.id) } >{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
+        <button class="list-button bg-green-300 rounded-sm text-white text-lg p-2 hover:bg-green-500" disabled={running} on:click={ () => handleQueueButtonClick(item.id) } >{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
       </li>
     {/each}
   </ul>
-</section>
-<section>
-  <button on:click={handleExecuteButton}>Execute</button>
-  {#if error}
-    <p>{error}</p>
-  {/if}
-</section>
-<section>
-  <ul>
-    <li>Log:</li>
-    {#each log as item}
-      <li>{item}</li>
-    {/each}
-  </ul>
-</section>
-<section>
-  <!-- <p>Timer: {displayTime}</p> -->
-  <ul>
+  <ul class="col-span-4 inline-block">
     <li>Loot:</li>
     {#each loot as item}
       <li>{item[0]}: {item[1].number}</li>
     {/each}
   </ul>
-</section>
+  <button class="col-start-1 bg-green-300 rounded-sm text-white text-lg p-2 hover:bg-green-500" on:click={handleExecuteButton}>Execute</button>
+  {#if error}
+    <p>{error}</p>
+  {/if}
+  <ul class="col-start-1 col-span-4 inline-block">
+    <li>Log:</li>
+    {#each log as item}
+      <li>{item}</li>
+    {/each}
+  </ul>
+</main>
 
-<style>
-  h1,
-  p {
-    text-align: center;
-  }
-
-  section {
-    column-gap: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin: auto;
-    max-width: 800px;
-    width: 100%;
-  }
-
+<style global lang="postcss">
   ul {
     list-style: none;
     padding: 0;
-    max-width: 50%;
     width: 100%;
   }
 

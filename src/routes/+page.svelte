@@ -1,6 +1,5 @@
 <script>
 // @ts-nocheck
-  import "../app.css";
 
   let limit = 0;
   let error = null;
@@ -293,23 +292,23 @@
   }
 </script>
 
-<h1>Welcome to ScrapKit</h1>
-<p>Choose some options that you want to execute.</p>
+<h1 class="text-3xl text-center font-bold">Welcome to ScrapKit</h1>
+<p class="text-center">Choose some options that you want to execute.</p>
 <section>
   <ul>
     <li>Options</li>
     {#each options as item (item.id)}
-      <li>
-        <button class="list-button" disabled={item.disabled || running} on:click={ () => handleAddButtonClick(item.id) }>{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
+      <li class="">
+        <button class="list-button bg-indigo-400 rounded-sm text-white text-lg p-2 hover:bg-indigo-600" disabled={item.disabled || running} on:click={ () => handleAddButtonClick(item.id) }>{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
       </li>
     {/each}
   </ul>
 
-  <ul>
+  <ul class="">
     <li>Queue</li>
     {#each queue as item (item.id)}
       <li>
-        <button class="list-button" disabled={running} on:click={ () => handleQueueButtonClick(item.id) } >{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
+        <button class="list-button bg-green-300 rounded-sm text-white text-lg p-2 hover:bg-green-500" disabled={running} on:click={ () => handleQueueButtonClick(item.id) } >{item.name} {Math.round(item.chance * 100)}% - {item.time / 1000}s</button>
       </li>
     {/each}
   </ul>
@@ -338,12 +337,8 @@
   </ul>
 </section>
 
-<style>
-  h1,
-  p {
-    text-align: center;
-  }
-
+<style global lang="postcss">
+  
   section {
     column-gap: 20px;
     display: flex;
